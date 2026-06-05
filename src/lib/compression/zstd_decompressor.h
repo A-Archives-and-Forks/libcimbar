@@ -34,6 +34,7 @@ public:
 				if (ZSTD_isError(res))
 				{
 					_lastError << " failed decompress? " << ZSTD_getErrorName(res);
+					_isError = true;
 					return false;
 				}
 
@@ -61,7 +62,7 @@ public:
 	{
 		if (!init_decompress(data, len))
 			return false;
-		while (_inBuff.size() > 0)
+		while (_inBuff.size() > 0 and good())
 			write_once();
 		return true;
 	}
@@ -91,6 +92,11 @@ public:
 		return totalBytesRead;
 	}
 
+	bool good() const
+	{
+		return !_isError and STREAM::good();
+	}
+
 	std::string last_error() const
 	{
 		return _lastError.str();
@@ -102,6 +108,7 @@ protected:
 	std::vector<char> _outBuff = std::vector<char>(ZSTD_DStreamOutSize());
 	std::string_view _inBuff;
 
+	bool _isError = false;
 	std::stringstream _lastError;
 };
 
