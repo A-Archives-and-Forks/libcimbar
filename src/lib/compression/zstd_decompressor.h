@@ -35,7 +35,7 @@ public:
 				{
 					_lastError << " failed decompress? " << ZSTD_getErrorName(res);
 					_isError = true;
-					return false;
+					return false; // we're not making progress, mayday mayday
 				}
 
 				if (output.pos > 0)
@@ -47,7 +47,7 @@ public:
 			}
 			_inBuff = std::string_view(_inBuff.data() + input.size, _inBuff.size() - input.size);
 		}
-		return false;
+		return true;
 	}
 
 	bool init_decompress(const char* data, size_t len)
@@ -62,8 +62,9 @@ public:
 	{
 		if (!init_decompress(data, len))
 			return false;
-		while (_inBuff.size() > 0 and good())
-			write_once();
+		while (_inBuff.size() > 0)
+			if (!write_once())
+				return false;
 		return true;
 	}
 
